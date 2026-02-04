@@ -1,0 +1,8 @@
+README.md
+main.py
+pyproject.toml
+flet_ui.egg-info/PKG-INFO
+flet_ui.egg-info/SOURCES.txt
+flet_ui.egg-info/dependency_links.txt
+flet_ui.egg-info/requires.txt
+flet_ui.egg-info/top_level.txt

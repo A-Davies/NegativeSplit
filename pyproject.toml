@@ -1,0 +1,24 @@
+[project]
+name = "negativesplit"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "strava-api",   # Makes it available to root scripts
+    "core",         # Makes config available to root scripts
+    "flet-ui",
+    "running-analysis"
+]
+
+[project.scripts]
+dashboard = "flet_ui.main:main"
+
+[tool.uv.workspace]
+members = ["packages/*", "apps/*"]
+
+[tool.uv.sources]
+strava-api = { workspace = true }
+core = { workspace = true }
+flet-ui = { workspace = true }
+running-analysis = { workspace = true }

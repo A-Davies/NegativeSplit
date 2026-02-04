@@ -1,0 +1,17 @@
+[project]
+name = "flet-ui"
+version = "0.1.0"
+description = "The NegativeSplit UI"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "flet>=0.21.0",
+    "strava-api",
+    "running-analysis",
+    "core"
+]
+
+[tool.uv.sources]
+core = { workspace = true }
+strava-api = { editable = true, workspace = true }
+running-analysis = { editable = true, workspace = true }
