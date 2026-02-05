@@ -1,6 +1,7 @@
 import pandas as pd  # type: ignore
 import httpx
 import time
+import math
 from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -31,7 +32,7 @@ class StravaSync:
             if self.rate_limit_usage["15min"]["used"] > (
                 self.rate_limit_usage["15min"]["limit"] * 0.9
             ):
-                print("⚠️ Rate limit 90% reached. Sleeping for 30s...")
+                print(R"⚠️ Rate limit 90% reached. Sleeping for 30s...")
                 time.sleep(30)
 
     def get_local_activity_ids(self) -> set[str]:
@@ -50,13 +51,22 @@ class StravaSync:
             if not new_activities:
                 return
 
-            print(f"🚀 Syncing {len(new_activities)} new activities...")
-            for activity in new_activities:
-                # TODO - add a counter and activity name
+            num_new_activities = len(new_activities)
+            num_log_10 = math.floor(math.log10(num_new_activities)) + 1
+            print(f"🚀 Syncing {num_new_activities} new activities...")
+            for activity_ind, activity in enumerate(new_activities, start=1):
+                activity_name = str(activity["name"])
+                print(
+                    f"{activity_ind:0{num_log_10}d}/{num_new_activities} - {activity_name}",
+                    end="",
+                    flush=True,
+                )
                 try:
                     streams = self.get_streams(client, activity["id"], token)
                     if streams:
-                        gpx_data = self.create_gpx(streams, activity["start_date"])
+                        gpx_data = self.create_gpx(
+                            streams, activity["start_date"], activity_name
+                        )
                         if gpx_data:
                             gpx_path = self.gpx_dir / f"{activity['id']}.gpx"
                             gpx_path.write_text(gpx_data)
@@ -65,6 +75,7 @@ class StravaSync:
                 except httpx.HTTPStatusError as e:
                     print(f"❌ Failed to fetch streams for {activity['id']}: {e}")
                     continue
+            print("\nAll activities synced.")
 
         # Update the Parquet/CSV database
         self.update_local_db(new_activities)
@@ -135,10 +146,12 @@ class StravaSync:
         resp.raise_for_status()
         return resp.json()
 
-    def create_gpx(self, streams: dict, start_time_string: str):
+    def create_gpx(self, streams: dict, start_time_string: str, activity_name: str):
         # Safety check: Manual entries or gym workouts won't have 'latlng'
         if "latlng" not in streams or not streams["latlng"].get("data"):
-            print("⏭️ No GPS data found for this activity. Skipping GPX creation.")
+            print(
+                f"⏭️ No GPS data found for this activity. Skipping GPX creation - {activity_name}"
+            )
             return False
 
         gpx_data = gpx.GPX()
