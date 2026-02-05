@@ -40,3 +40,7 @@ to add a dependencies to a specific package (project)
 ```
 uv --project packages/core add python-dotenv
 ```
+
+uv add --dev ruff
+
+created a ruff.toml file in NegativeSplit root
