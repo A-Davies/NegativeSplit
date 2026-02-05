@@ -1,13 +1,16 @@
-import pandas as pd  # type: ignore
-import httpx
-import time
 import math
-from pathlib import Path
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from gpxpy import gpx
-from strava_api.token_manager import TokenManager
+from pathlib import Path
+from typing import Any
+
+import httpx
+import pandas as pd  # type: ignore
 from core.config import settings
+from gpxpy import gpx
+
+from strava_api.token_manager import TokenManager
 
 
 @dataclass
@@ -19,8 +22,8 @@ class StravaSync:
     # Track usage to keep the UI informed later
     rate_limit_usage: dict = field(default_factory=dict)
 
-    def _update_rate_limits(self, headers):
-        """Parse Strava rate limit headers: 'usage, limit'"""
+    def _update_rate_limits(self, headers: httpx.Headers) -> None:
+        """Parse Strava rate limit headers: 'usage, limit'."""
         if "X-Ratelimit-Usage" in headers:
             usage = headers["X-Ratelimit-Usage"].split(",")
             limit = headers["X-Ratelimit-Limit"].split(",")
@@ -39,7 +42,7 @@ class StravaSync:
         """Returns a set of activity IDs already saved as GPX."""
         return {f.stem for f in self.gpx_dir.glob("*.gpx")}
 
-    def sync(self):
+    def sync(self) -> None:
         token = self.token_manager.get_valid_token()
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -62,14 +65,17 @@ class StravaSync:
                     flush=True,
                 )
                 try:
-                    streams = self.get_streams(client, activity["id"], token)
-                    if streams:
-                        gpx_data = self.create_gpx(
+                    has_streams, streams = self.get_streams(
+                        client, activity["id"], token
+                    )
+                    if has_streams is True:
+                        gpx_data_exists, gpx_data = self.create_gpx(
                             streams, activity["start_date"], activity_name
                         )
-                        if gpx_data:
+                        if gpx_data_exists is True:
                             gpx_path = self.gpx_dir / f"{activity['id']}.gpx"
-                            gpx_path.write_text(gpx_data)
+                            if not gpx_path.exists():
+                                gpx_path.write_text(gpx_data)
                     # Respect the API
                     time.sleep(0.5)
                 except httpx.HTTPStatusError as e:
@@ -80,7 +86,9 @@ class StravaSync:
         # Update the Parquet/CSV database
         self.update_local_db(new_activities)
 
-    def fetch_new_activity_list(self, client: httpx.Client, headers: dict):
+    def fetch_new_activity_list(
+        self, client: httpx.Client, headers: dict
+    ) -> list | None:
 
         local_ids = self.get_local_activity_ids()
         new_activities = []
@@ -113,11 +121,11 @@ class StravaSync:
 
         if not new_activities:
             print("✨ Everything is already up to date!")
-            return
+            return None
         else:
             return new_activities
 
-    def update_local_db(self, new_data):
+    def update_local_db(self, new_data: list) -> None:
         new_df = pd.DataFrame(new_data)
         if self.parquet_path.exists():
             old_df = pd.read_parquet(self.parquet_path)
@@ -129,7 +137,9 @@ class StravaSync:
         final_df.to_csv(self.parquet_path.with_suffix(".csv"), index=False)
         print("💾 Local database updated.")
 
-    def get_streams(self, client: httpx.Client, activity_id: int, access_token: str):
+    def get_streams(
+        self, client: httpx.Client, activity_id: int, access_token: str
+    ) -> tuple[bool, Any]:
         url = f"https://www.strava.com/api/v3/activities/{activity_id}/streams"
         headers = {"Authorization": f"Bearer {access_token}"}
         params = {
@@ -141,18 +151,20 @@ class StravaSync:
         self._update_rate_limits(resp.headers)
 
         if resp.status_code == 404:
-            return None
+            return False, {}
 
         resp.raise_for_status()
-        return resp.json()
+        return True, resp.json()
 
-    def create_gpx(self, streams: dict, start_time_string: str, activity_name: str):
+    def create_gpx(
+        self, streams: dict, start_time_string: str, activity_name: str
+    ) -> tuple[bool, str]:
         # Safety check: Manual entries or gym workouts won't have 'latlng'
         if "latlng" not in streams or not streams["latlng"].get("data"):
             print(
                 f"⏭️ No GPS data found for this activity. Skipping GPX creation - {activity_name}"
             )
-            return False
+            return False, ""
 
         gpx_data = gpx.GPX()
         segment = gpx.GPXTrackSegment()
@@ -165,7 +177,7 @@ class StravaSync:
         altitudes = streams.get("altitude", {}).get("data", [0] * len(latlngs))
         times = streams.get("time", {}).get("data", range(len(latlngs)))
 
-        for latlng, alt, seconds in zip(latlngs, altitudes, times):
+        for latlng, alt, seconds in zip(latlngs, altitudes, times, strict=True):
             point = gpx.GPXTrackPoint(
                 latitude=latlng[0],
                 longitude=latlng[1],
@@ -178,4 +190,4 @@ class StravaSync:
         track.segments.append(segment)
         gpx_data.tracks.append(track)
 
-        return gpx_data.to_xml()
+        return True, gpx_data.to_xml()

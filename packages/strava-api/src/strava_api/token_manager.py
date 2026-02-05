@@ -1,10 +1,11 @@
 import json
 import time
-import httpx
-from pydantic import BaseModel
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
+
+import httpx
 from core.config import settings
+from pydantic import BaseModel
 
 
 class StravaToken(BaseModel):
@@ -27,7 +28,7 @@ class TokenManager:
     def load_token(self) -> StravaToken | None:
         if not self.cache_path.exists():
             return None
-        with open(self.cache_path, "r") as f:
+        with open(self.cache_path) as f:
             return StravaToken(**json.load(f))
 
     def get_valid_token(self) -> str:
