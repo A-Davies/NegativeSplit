@@ -2,23 +2,24 @@ from strava_api.token_manager import TokenManager
 from strava_api.sync_service import StravaSync
 from core.config import settings
 
+# TODO - currently not working on work laptop on work wifi, need to test at home
+
 
 def main():
-    # 1. Initialize Folders
+    # Initialize Folders
     print("📁 Setting up data directories...")
     settings.setup_folders()
 
-    # 2. Setup Credentials
-    # Replace with your actual credentials from the Strava Dashboard
-    MY_CLIENT_ID = ""
-    MY_CLIENT_SECRET = ""
+    # Setup Credentials
+    STRAVA_CLIENT_ID = settings.STRAVA_CLIENT_ID
+    STRAVA_CLIENT_SECRET = settings.STRAVA_CLIENT_SECRET
 
-    # 3. Initialize the Engine
+    # Initialize the Engine
     print("🔑 Authenticating with Strava...")
-    token_manager = TokenManager(MY_CLIENT_ID, MY_CLIENT_SECRET)
+    token_manager = TokenManager(STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET)
     syncer = StravaSync(token_manager=token_manager)
 
-    # 4. Run the Sync
+    # Run the Sync
     print("🔄 Starting Sync Loop...")
     syncer.sync()
     print("✅ Finished! Check the 'data' folder for your GPX and Parquet files.")
