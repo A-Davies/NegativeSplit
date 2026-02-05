@@ -36,3 +36,7 @@ running-analysis = { workspace = true, editable = true }
 then run uv sync
 
 
+to add a dependencies to a specific package (project)
+```
+uv --project packages/core add python-dotenv
+```
