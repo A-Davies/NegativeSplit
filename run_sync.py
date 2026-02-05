@@ -14,14 +14,14 @@ def main() -> None:
     settings.setup_folders()
 
     # Setup Credentials
-    STRAVA_CLIENT_ID = settings.STRAVA_CLIENT_ID
-    STRAVA_CLIENT_SECRET = settings.STRAVA_CLIENT_SECRET
-    assert isinstance(STRAVA_CLIENT_ID, str)
-    assert isinstance(STRAVA_CLIENT_SECRET, str)
+    strava_client_id = settings.STRAVA_CLIENT_ID
+    strava_client_secret = settings.STRAVA_CLIENT_SECRET
+    assert isinstance(strava_client_id, str)
+    assert isinstance(strava_client_secret, str)
 
     # Initialize the Engine
     print("🔑 Authenticating with Strava...")
-    token_manager = TokenManager(STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET)
+    token_manager = TokenManager(strava_client_id, strava_client_secret)
     syncer = StravaSync(token_manager=token_manager)
 
     # Run the Sync

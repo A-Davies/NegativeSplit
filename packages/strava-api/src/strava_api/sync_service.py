@@ -122,8 +122,8 @@ class StravaSync:
         if not new_activities:
             print("✨ Everything is already up to date!")
             return None
-        else:
-            return new_activities
+
+        return new_activities
 
     def update_local_db(self, new_data: list) -> None:
         new_df = pd.DataFrame(new_data)

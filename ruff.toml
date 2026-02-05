@@ -2,7 +2,11 @@ line-length = 120
 target-version = "py314"
 
 [lint]
-select = ["E", "F", "I", "UP", "B", "A", "PT", "ANN", "D"]
+# see https://docs.astral.sh/ruff/rules/ for a comprehensive list
+select = [
+    "E", "F", "I", "UP", "B", "A", "PT", "ANN", "D", "C4", "LOG", "G", "PIE", "Q", "RSE", "RET", "SIM", "ARG", "PTH", 
+    "NPY", "PD", "N", "PERF", "W", "DOC", "PLE", "PLR", "PLW", "FURB", "RUF", "TRY"
+    ]
 ignore = ["D401"]
 # ignore = ["E501"]
 

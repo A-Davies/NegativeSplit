@@ -22,13 +22,13 @@ class TokenManager:
 
     def save_token(self, token_data: dict) -> None:
         Path(self.cache_path.parent).mkdir(exist_ok=True, parents=True)
-        with open(self.cache_path, "w") as f:
+        with self.cache_path.open() as f:
             json.dump(token_data, f)
 
     def load_token(self) -> StravaToken | None:
         if not self.cache_path.exists():
             return None
-        with open(self.cache_path) as f:
+        with self.cache_path.open() as f:
             return StravaToken(**json.load(f))
 
     def get_valid_token(self) -> str:
@@ -56,18 +56,3 @@ class TokenManager:
         new_token_data = response.json()
         self.save_token(new_token_data)
         return new_token_data["access_token"]
-
-
-def main():
-
-    pass
-
-    # manager = TokenManager(client_id="YOUR_ID", client_secret="YOUR_SECRET")
-
-    # # This will either return the current token or
-    # # automatically call Strava to get a new one.
-    # token = manager.get_valid_token()
-
-    # # Now use it in a request
-    # headers = {"Authorization": f"Bearer {token}"}
-    # # ... make your API call ...
