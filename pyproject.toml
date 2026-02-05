@@ -22,3 +22,8 @@ strava-api = { workspace = true }
 core = { workspace = true }
 flet-ui = { workspace = true }
 running-analysis = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.0",
+]
