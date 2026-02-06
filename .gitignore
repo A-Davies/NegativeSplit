@@ -7,6 +7,7 @@ __pycache__/
 
 # Project Specific
 data/
+temp/
 projects/**/cache/
 *.parquet
 *.gpx
