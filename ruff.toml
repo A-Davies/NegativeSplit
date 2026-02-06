@@ -5,10 +5,13 @@ target-version = "py314"
 # see https://docs.astral.sh/ruff/rules/ for a comprehensive list
 select = [
     "E", "F", "I", "UP", "B", "A", "PT", "ANN", "D", "C4", "LOG", "G", "PIE", "Q", "RSE", "RET", "SIM", "ARG", "PTH", 
-    "NPY", "PD", "N", "PERF", "W", "DOC", "PLE", "PLR", "PLW", "FURB", "RUF", "TRY"
+    "NPY", "PD", "N", "PERF", "W", "DOC", "PLE", "PLR", "PLW", "FURB", "RUF", "TRY", "ERA"
     ]
 ignore = ["D401"]
 # ignore = ["E501"]
+
+[lint.pydocstyle]
+convention = "pep257"  # or "numpy" or "pep257"
 
 [lint.per-file-ignores]
 "tests/*" = ["D"]
