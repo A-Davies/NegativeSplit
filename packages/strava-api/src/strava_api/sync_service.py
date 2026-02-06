@@ -133,6 +133,8 @@ class StravaSync:
         else:
             final_df = new_df
 
+        # TODO - do I need to type each column here before saving?
+
         final_df.to_parquet(self.parquet_path, engine="pyarrow", index=False)
         final_df.to_csv(self.parquet_path.with_suffix(".csv"), index=False)
         print("💾 Local database updated.")
@@ -191,3 +193,62 @@ class StravaSync:
         gpx_data.tracks.append(track)
 
         return True, gpx_data.to_xml()
+
+    def prepare_df_for_parquet(self, raw_df: pd.DataFrame) -> pd.DataFrame:
+
+        column_types_dict = {
+            "name": str,
+            "distance": float,
+            "moving_time": int,
+            "elapsed_time": int,
+            "total_elevation_gain": float,
+            "type": str,
+            "sport_type": str,
+            "workout_type": float,
+            "device_name": str,
+            "id": int,
+            "start_date": datetime,
+            "start_date_local": datetime,
+            "timezone": datetime,
+            "utc_offset": int,
+            "location_city": str,
+            "location_state": str,
+            "location_country": str,
+            "achievement_count": int,
+            "kudos_count": int,
+            "comment_count": int,
+            "athlete_count": int,
+            "photo_count": int,
+            "map": dict[str, str],
+            "trainer": bool,
+            "commute": bool,
+            "manual": bool,
+            "private": bool,
+            "visibility": str,
+            "flagged": bool,
+            "gear_id": str,
+            "start_latlng": tuple[float, float],
+            "end_latlng": tuple[float, float],
+            "average_speed": float,
+            "max_speed": float,
+            "average_cadence": float,
+            "has_heartrate": bool,
+            "average_heartrate": float,
+            "max_heartrate": int,
+            "heartrate_opt_out": bool,
+            "display_hide_heartrate_option": bool,
+            "elev_high": float,
+            "elev_low": float,
+            "upload_id": int,
+            "upload_id_str": int,
+            "external_id": str,
+            "from_accepted_tag": bool,
+            "pr_count": int,
+            "total_photo_count": int,
+            "has_kudoed": bool,
+            "average_temp": float,
+        }
+
+        out_df = raw_df.copy()
+
+        return out_df
