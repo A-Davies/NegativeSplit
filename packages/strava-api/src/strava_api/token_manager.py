@@ -22,8 +22,7 @@ class TokenManager:
 
     def save_token(self, token_data: dict) -> None:
         Path(self.cache_path.parent).mkdir(exist_ok=True, parents=True)
-        with self.cache_path.open() as f:
-            json.dump(token_data, f)
+        self.cache_path.write_text(json.dumps(token_data, indent=4))
 
     def load_token(self) -> StravaToken | None:
         if not self.cache_path.exists():
