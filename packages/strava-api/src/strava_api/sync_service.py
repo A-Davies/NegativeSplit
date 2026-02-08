@@ -1,4 +1,3 @@
-import math
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -9,8 +8,14 @@ import httpx
 import pandas as pd  # type: ignore
 from core.config import settings
 from gpxpy import gpx
+from tqdm import tqdm
 
 from strava_api.token_manager import TokenManager
+
+# TODO - Could I remove unused columns from parquet? Keep them in the csv for later use?
+# TODO - ensure that the polyline is properly handled, it should still be saved in activities.csv
+# TODO - could add a method to only generate the raw activites.csv
+# TODO - have a date, start_date_time columns
 
 
 @dataclass
@@ -18,7 +23,7 @@ class StravaSync:
     token_manager: TokenManager
     base_dir: Path = settings.DATA_DIR
     gpx_dir: Path = settings.GPX_DIR
-    parquet_path: Path = settings.PARQUET_PATH
+    raw_activities_path: Path = settings.RAW_ACTIVITES_PATH
     # Track usage to keep the UI informed later
     rate_limit_usage: dict = field(default_factory=dict)
 
@@ -39,8 +44,15 @@ class StravaSync:
                 time.sleep(30)
 
     def get_local_activity_ids(self) -> set[str]:
-        """Returns a set of activity IDs already saved as GPX."""
-        return {f.stem for f in self.gpx_dir.glob("*.gpx")}
+        """Returns a set of activity IDs sourced from the Parquet database."""
+        if not self.raw_activities_path.exists():
+            return set()
+
+        # Efficiently load ONLY the ID column
+        df_ids = pd.read_csv(self.raw_activities_path, usecols=["id"])
+
+        # Convert to strings and return as a set for O(1) lookups
+        return set(df_ids["id"].astype(str).tolist())
 
     def sync(self) -> None:
         token = self.token_manager.get_valid_token()
@@ -54,16 +66,18 @@ class StravaSync:
             if not new_activities:
                 return
 
-            num_new_activities = len(new_activities)
-            num_log_10 = math.floor(math.log10(num_new_activities)) + 1
-            print(f"🚀 Syncing {num_new_activities} new activities...")
-            for activity_ind, activity in enumerate(new_activities, start=1):
-                activity_name = str(activity["name"])
-                print(
-                    f"{activity_ind:0{num_log_10}d}/{num_new_activities} - {activity_name}",
-                    end="",
-                    flush=True,
-                )
+            pbar = tqdm(new_activities, desc="🔄 Syncing Strava", unit="act")
+
+            for activity in pbar:
+                activity_name = activity.get("name", "Unknown Activity")
+                activity_id = activity.get("id")
+                pbar.set_postfix_str(f"Run: {activity_name}")
+
+                gpx_path = self.gpx_dir / f"{activity_id}.gpx"
+
+                if gpx_path.exists():
+                    continue
+
                 try:
                     has_streams, streams = self.get_streams(
                         client, activity["id"], token
@@ -73,9 +87,7 @@ class StravaSync:
                             streams, activity["start_date"], activity_name
                         )
                         if gpx_data_exists is True:
-                            gpx_path = self.gpx_dir / f"{activity['id']}.gpx"
-                            if not gpx_path.exists():
-                                gpx_path.write_text(gpx_data)
+                            gpx_path.write_text(gpx_data)
                     # Respect the API
                     time.sleep(0.5)
                 except httpx.HTTPStatusError as e:
@@ -127,16 +139,14 @@ class StravaSync:
 
     def update_local_db(self, new_data: list) -> None:
         new_df = pd.DataFrame(new_data)
-        if self.parquet_path.exists():
-            old_df = pd.read_parquet(self.parquet_path)
+        if self.raw_activities_path.exists():
+            old_df = pd.read_csv(self.raw_activities_path)
             final_df = pd.concat([new_df, old_df]).drop_duplicates(subset=["id"])
         else:
             final_df = new_df
 
-        # TODO - do I need to type each column here before saving?
+        final_df.to_csv(self.raw_activities_path, index=False)
 
-        final_df.to_parquet(self.parquet_path, engine="pyarrow", index=False)
-        final_df.to_csv(self.parquet_path.with_suffix(".csv"), index=False)
         print("💾 Local database updated.")
 
     def get_streams(
@@ -193,62 +203,3 @@ class StravaSync:
         gpx_data.tracks.append(track)
 
         return True, gpx_data.to_xml()
-
-    def prepare_df_for_parquet(self, raw_df: pd.DataFrame) -> pd.DataFrame:
-
-        column_types_dict = {
-            "name": str,
-            "distance": float,
-            "moving_time": int,
-            "elapsed_time": int,
-            "total_elevation_gain": float,
-            "type": str,
-            "sport_type": str,
-            "workout_type": float,
-            "device_name": str,
-            "id": int,
-            "start_date": datetime,
-            "start_date_local": datetime,
-            "timezone": datetime,
-            "utc_offset": int,
-            "location_city": str,
-            "location_state": str,
-            "location_country": str,
-            "achievement_count": int,
-            "kudos_count": int,
-            "comment_count": int,
-            "athlete_count": int,
-            "photo_count": int,
-            "map": dict[str, str],
-            "trainer": bool,
-            "commute": bool,
-            "manual": bool,
-            "private": bool,
-            "visibility": str,
-            "flagged": bool,
-            "gear_id": str,
-            "start_latlng": tuple[float, float],
-            "end_latlng": tuple[float, float],
-            "average_speed": float,
-            "max_speed": float,
-            "average_cadence": float,
-            "has_heartrate": bool,
-            "average_heartrate": float,
-            "max_heartrate": int,
-            "heartrate_opt_out": bool,
-            "display_hide_heartrate_option": bool,
-            "elev_high": float,
-            "elev_low": float,
-            "upload_id": int,
-            "upload_id_str": int,
-            "external_id": str,
-            "from_accepted_tag": bool,
-            "pr_count": int,
-            "total_photo_count": int,
-            "has_kudoed": bool,
-            "average_temp": float,
-        }
-
-        out_df = raw_df.copy()
-
-        return out_df
