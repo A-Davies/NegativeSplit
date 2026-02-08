@@ -8,7 +8,7 @@ dependencies = [
     "flet>=0.21.0",
     "strava-api",
     "running-analysis",
-    "core"
+    "core",
 ]
 
 [tool.uv.sources]
