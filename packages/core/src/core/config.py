@@ -17,7 +17,8 @@ class Config:
     CACHE_DIR = DATA_DIR / "cache"
 
     # Specific File Paths
-    PARQUET_PATH = PROCESSED_DIR / "activities.parquet"
+    RAW_ACTIVITES_PATH = PROCESSED_DIR / "raw_activities.csv"
+    PROCESSED_ACTIVITIES_PATH = PROCESSED_DIR / "processed_activities.parquet"
     TOKEN_JSON = CACHE_DIR / "token.json"
 
     # Strava API keys, get from environment
@@ -33,6 +34,20 @@ class Config:
         for path in [cls.GPX_DIR, cls.PROCESSED_DIR, cls.CACHE_DIR]:
             path.mkdir(parents=True, exist_ok=True)
 
+
+DISTANCE_TARGETS = {
+    "year": {
+        "2026": 2500,
+        "default": 2000,
+    },
+    "month": {
+        "2026-01": 150,
+        "2026-02": 200,
+        "2026-03": 250,
+        "2026-04": 300,
+        "default": 150,
+    },
+}
 
 # Create a singleton instance for easy import
 settings = Config()
