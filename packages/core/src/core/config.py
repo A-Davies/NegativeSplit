@@ -4,6 +4,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
+class StravaCredentialsError(Exception):
+    """Missing Strava credentials. Please set STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET in your .env file."""
+
+
 class Config:
     # Find the Workspace Root (Climb up from this file)
     # config.py -> core -> src -> core -> projects -> NegativeSplit
@@ -23,13 +27,17 @@ class Config:
 
     # Strava API keys, get from environment
     # Load .env file into environment variables
-    # TODO - add a try except here, this needs to be flagged when it fails, as well as how to fix.
     load_dotenv()
     STRAVA_CLIENT_ID = os.getenv("STRAVA_CLIENT_ID")
     STRAVA_CLIENT_SECRET = os.getenv("STRAVA_CLIENT_SECRET")
 
+    if not STRAVA_CLIENT_ID or not STRAVA_CLIENT_SECRET:
+        raise StravaCredentialsError
+
+    STRAVA_API_BASE = "https://www.strava.com/api/v3"
+
     @classmethod
-    def setup_folders(cls):
+    def setup_folders(cls) -> None:
         """Call this once to ensure your data tree exists."""
         for path in [cls.GPX_DIR, cls.PROCESSED_DIR, cls.CACHE_DIR]:
             path.mkdir(parents=True, exist_ok=True)

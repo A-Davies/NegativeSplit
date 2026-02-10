@@ -7,7 +7,7 @@ select = [
     "E", "F", "I", "UP", "B", "A", "PT", "ANN", "D", "C4", "LOG", "G", "PIE", "Q", "RSE", "RET", "SIM", "ARG", "PTH", 
     "NPY", "PD", "N", "PERF", "W", "DOC", "PLE", "PLR", "PLW", "FURB", "RUF", "TRY", "ERA"
     ]
-ignore = ["D401"]
+ignore = ["D204", "D401"]
 # ignore = ["E501"]
 
 [lint.pydocstyle]

@@ -22,7 +22,7 @@ def format_pace(pace_float):
 # --- Data Loading & Vectorized Calculation ---
 def load_and_process_data():
     try:
-        df = pd.read_parquet(settings.PROCESSED_PARQUET_PATH)
+        df = pd.read_parquet(settings.PROCESSED_ACTIVITIES_PATH)
         df = df[df["type"] == "Run"].copy()
         df = df.reset_index()
         df["date"] = pd.to_datetime(df["date"])
@@ -57,7 +57,7 @@ def handle_sync():
 def main(page: ft.Page):
     page.title = "NegativeSplit Dashboard"
     page.theme_mode = ft.ThemeMode.DARK
-    page.window_maximized = True
+    page.window_full_screen = True
     page.padding = 20
 
     full_df = pd.read_parquet(settings.PROCESSED_ACTIVITIES_PATH)

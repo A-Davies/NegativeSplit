@@ -9,6 +9,7 @@ dependencies = [
     "strava-api",
     "running-analysis",
     "core",
+    "pandas-stubs>=3.0.0.260204",
 ]
 
 [tool.uv.sources]

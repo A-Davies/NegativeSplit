@@ -1,17 +1,26 @@
-import pandas as pd
-from pathlib import Path
-from core.config import settings, DISTANCE_TARGETS
-from core.parquet_schema import STRAVA_COLUMN_TYPES
-import numpy as np
-import json
-import ast
+"""This module processes the raw Strava activity data into a cleaned parquet file."""
 
-# TODO - should I still be using pyarrow?
+import ast
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from core.config import DISTANCE_TARGETS, settings
+from core.parquet_schema import STRAVA_COLUMN_TYPES
 
 
 def calculate_target_relatives(
     df: pd.DataFrame, distance_targets: dict
 ) -> pd.DataFrame:
+    """Calculates the relative target performance for both monthly and yearly targets for a set of dates.
+
+    :param df: dataframe containing at least a 'date' and 'distance_km' column.
+    :type df: pd.DataFrame
+    :param distance_targets: dict with monthly and yearly targets.
+    :type distance_targets: dict
+    :return: dataframe with additional columns showing relative targeet performances for month and year.
+    :rtype: pd.DataFrame
+    """
     # 1. Setup Data & Targets
     # Convert string keys to Period keys ('M' for months, 'A' for years)
     month_targets = {
@@ -33,16 +42,16 @@ def calculate_target_relatives(
     df["distance_km"] = df["distance"] / 1000
 
     # 3. Monthly Calculations
-    m_periods = df["date"].dt.to_period("M")
-    df["pct_of_month"] = df["date"].dt.day / df["date"].dt.days_in_month
+    m_periods = df["date"].dt.to_period("M")  # type: ignore
+    df["pct_of_month"] = df["date"].dt.day / df["date"].dt.days_in_month  # type: ignore
     df["month_target"] = m_periods.map(month_targets).fillna(month_default)
     df["monthly_cumulative"] = df.groupby(m_periods)["distance_km"].cumsum()
 
     # 4. Yearly Calculations
-    y_periods = df["date"].dt.to_period("Y")  # 'A' is for Annual
+    y_periods = df["date"].dt.to_period("Y")  # 'A' is for Annual #type: ignore
     # Day of year (1-366) / Total days in that year
-    day_of_year = df["date"].dt.dayofyear
-    days_in_year = np.where(df["date"].dt.is_leap_year, 366, 365)
+    day_of_year = df["date"].dt.dayofyear  # type: ignore
+    days_in_year = np.where(df["date"].dt.is_leap_year, 366, 365)  # type: ignore
     df["pct_of_year"] = day_of_year / days_in_year
 
     df["year_target"] = y_periods.map(year_targets).fillna(year_default)
@@ -60,24 +69,42 @@ def calculate_target_relatives(
     return df.sort_values("start_date_time", ascending=False)
 
 
-def safe_eval(val):
+def safe_eval_for_coord_list(list_lat_lon: str) -> list[float | None]:
+    """Safely evaluates a string representation of a list of coordinates [lat, lon].
+
+    :param list_lat_lon: string representation of a list of lat, log, e.g. "[37.7749, -122.4194]"
+    :type list_lat_lon: str
+    :return: list of [lat, lon] or [None, None]
+    :rtype: list[float | None]
+    """
     try:
-        return ast.literal_eval(val)
+        return ast.literal_eval(list_lat_lon)
     except (ValueError, SyntaxError):
         return [None, None]
 
 
 def process_coordinates(df: pd.DataFrame) -> pd.DataFrame:
     df[["start_lat", "start_lon"]] = pd.DataFrame(
-        df["start_latlng"].apply(safe_eval).tolist(), index=df.index
+        df["start_latlng"].apply(safe_eval_for_coord_list).tolist(), index=df.index
     )
     df[["end_lat", "end_lon"]] = pd.DataFrame(
-        df["end_latlng"].apply(safe_eval).tolist(), index=df.index
+        df["end_latlng"].apply(safe_eval_for_coord_list).tolist(), index=df.index
     )
     return df
 
 
-def add_rolling_day_data(window_size: int, distance_column: pd.Series):
+def add_rolling_day_data(
+    window_size: int, distance_column: pd.Series
+) -> tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+    """Creates rolling sums and differences for a given window size and distance column.
+
+    :param window_size: size of the rolling window in days (e.g. 7 for weekly, 30 for monthly)
+    :type window_size: int
+    :param distance_column: the column containing distance data to perform rolling calculations on
+    :type distance_column: pd.Series
+    :return: a tuple of the rolling sum, rolling mean per day, rolling sum difference, and rolling mean difference
+    :rtype: tuple[pd.Series, pd.Series, pd.Series, pd.Series]
+    """
     window_distance = distance_column.rolling(window=f"{window_size}D").sum()
     window_distance_per_day = window_distance / window_size
     window_distance_diff = window_distance.diff()
