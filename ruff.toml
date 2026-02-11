@@ -51,12 +51,7 @@ select = [
 
 # (2) RULES YOU *WANT LINTED* BUT DO NOT WANT TO BLOCK COMMITS
 # → ignore them here; they show up in editor but DO NOT block commits.
-ignore = [
-    "D204",  # docstring rules you don't want blocking
-    "D401",
-    "W",     # all pycodestyle warnings
-    "DOC",   # documentation style warnings
-]
+ignore = []
 
 # (3) Rules Ruff is allowed to auto‑fix (when you use `--fix` in pre‑commit)
 # Usually safe to allow all.
