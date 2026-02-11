@@ -5,10 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "strava-api",   # Makes it available to root scripts
-    "core",         # Makes config available to root scripts
+    "strava-api", # Makes it available to root scripts
+    "core", # Makes config available to root scripts
     "flet-ui",
-    "running-analysis"
+    "running-analysis",
+    "pre-commit>=4.5.1",
 ]
 
 [project.scripts]

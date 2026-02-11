@@ -1,17 +1,87 @@
 line-length = 120
 target-version = "py314"
 
+# These exclusions apply to BOTH linting and formatting:
+exclude = [
+    ".venv",
+    "dist",
+    "build",
+    "__pycache__",
+]
+
 [lint]
 # see https://docs.astral.sh/ruff/rules/ for a comprehensive list
+# (1) RULES THAT LINT AND BLOCK COMMITS
+# Choose exactly which rules you want enforced strongly.
+# These rules will BLOCK commits if not ignored and not auto-fixable.
 select = [
-    "E", "F", "I", "UP", "B", "A", "PT", "ANN", "D", "C4", "LOG", "G", "PIE", "Q", "RSE", "RET", "SIM", "ARG", "PTH", 
-    "NPY", "PD", "N", "PERF", "W", "DOC", "PLE", "PLR", "PLW", "FURB", "RUF", "TRY", "ERA"
-    ]
-ignore = ["D204", "D401"]
-# ignore = ["E501"]
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # import order
+    "UP",  # pyupgrade
+    "B",   # bugbear
+    "A",   # builtins
+    "PT",  # pytest rules
+    "ANN", # annotations
+    "C4",  # comprehensions
+    "SIM", # simplify
+    "ARG", # unused args
+    "PLE", # pylint errors
+    "PLW", # pylint warnings
+    "TRY", # try/except style
+    "D",
+    "LOG",
+    "G",
+    "PIE",
+    "Q",
+    "RSE",
+    "RET",
+    "PTH", 
+    "NPY",
+    "PD",
+    "N",
+    "PERF",
+    "W",
+    "DOC",
+    "PLR",
+    "FURB",
+    "RUF",
+    "ERA"
+]
 
-[lint.pydocstyle]
-convention = "pep257"  # or "numpy" or "pep257"
+# (2) RULES YOU *WANT LINTED* BUT DO NOT WANT TO BLOCK COMMITS
+# → ignore them here; they show up in editor but DO NOT block commits.
+ignore = [
+    "D204",  # docstring rules you don't want blocking
+    "D401",
+    "W",     # all pycodestyle warnings
+    "DOC",   # documentation style warnings
+]
 
+# (3) Rules Ruff is allowed to auto‑fix (when you use `--fix` in pre‑commit)
+# Usually safe to allow all.
+fixable = ["ALL"]
+unfixable = []
+
+
+# Fine‑tune line-length for linting (separate from formatter’s wrap length)
+[lint.pycodestyle]
+max-line-length = 120
+
+
+# Per‑file rule overrides:
 [lint.per-file-ignores]
+# Allow all docstring rule violations in tests:
 "tests/*" = ["D"]
+
+[format]
+
+# Only these items affect formatting.
+quote-style = "double"      # "single" or "double"
+indent-style = "space"      # "space" or "tab"
+line-ending = "auto"        # "lf", "crlf", "native", "auto"
+skip-magic-trailing-comma = false
+
+# Format code blocks inside docstrings (OFF = safer)
+docstring-code-format = false
+docstring-code-line-length = "dynamic"

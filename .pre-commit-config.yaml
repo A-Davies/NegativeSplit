@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+
+      # -----------------------------
+      # LINTING (BLOCKS COMMITS)
+      # -----------------------------
+      - id: ruff-check
+        args: [ "--fix" ]   # Autofix what can be fixed; remaining violations BLOCK the commit
+        # Optional: restrict which files to lint
+        # files: "^src/"
+        # exclude: "^legacy/"
+
+      # -----------------------------
+      # FORMATTING (NEVER BLOCKS COMMITS)
+      # -----------------------------
+      - id: ruff-format
+        # Formatting should not block commits; it only rewrites files
+        # Optional: restrict which files are formatted
+        # files: "^src/"
