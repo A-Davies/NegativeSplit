@@ -51,7 +51,9 @@ select = [
 
 # (2) RULES YOU *WANT LINTED* BUT DO NOT WANT TO BLOCK COMMITS
 # → ignore them here; they show up in editor but DO NOT block commits.
-ignore = []
+ignore = [
+    "D401", # First line of docstring should be in imperative mood
+]
 
 # (3) Rules Ruff is allowed to auto‑fix (when you use `--fix` in pre‑commit)
 # Usually safe to allow all.
